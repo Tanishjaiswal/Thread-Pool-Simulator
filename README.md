@@ -16,7 +16,7 @@ in your browser.
 Just open `index.html` in any browser. No installation needed.
 
 Or visit the live demo:
-👉 https://YOUR_USERNAME.github.io/thread-pool-simulator
+👉 (https://tanishjaiswal.github.io/Thread-Pool-Simulator/)
 
 ## 🛠️ Built With
 - HTML5
