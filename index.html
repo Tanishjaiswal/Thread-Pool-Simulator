@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thread Pool Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scanlines"></div>
+<div class="noise"></div>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo">
+      <span class="logo-bracket">[</span>
+      <span class="logo-text">THREAD<span class="logo-accent">POOL</span></span>
+      <span class="logo-bracket">]</span>
+    </div>
+    <div class="header-sub">concurrent execution simulator v1.0</div>
+  </div>
+  <div class="header-right">
+    <div class="status-indicator" id="pool-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">RUNNING</span>
+    </div>
+    <div class="clock" id="clock">00:00:00</div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- LEFT COLUMN -->
+  <aside class="sidebar">
+
+    <section class="card" id="controls-card">
+      <div class="card-header">
+        <span class="card-label"> Pool Config</span>
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>core threads</span>
+          <span class="control-val" id="core-val">4</span>
+        </div>
+        <input type="range" class="slider" id="core-size" min="1" max="12" value="4">
+        <div class="slider-ticks">
+          <span>1</span><span>4</span><span>8</span><span>12</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>task duration</span>
+          <span class="control-val" id="dur-val">800ms</span>
+        </div>
+        <input type="range" class="slider" id="task-dur" min="200" max="3000" step="100" value="800">
+        <div class="slider-ticks">
+          <span>200ms</span><span>1s</span><span>2s</span><span>3s</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>burst size</span>
+          <span class="control-val" id="burst-val">5</span>
+        </div>
+        <input type="range" class="slider" id="burst-size" min="1" max="20" value="5">
+        <div class="slider-ticks">
+          <span>1</span><span>5</span><span>10</span><span>20</span>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-ghost" id="pause-btn" onclick="pool.togglePause()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <rect x="2" y="2" width="3" height="8" fill="currentColor"/>
+            <rect x="7" y="2" width="3" height="8" fill="currentColor"/>
+          </svg>
+          Pause
+        </button>
+        <button class="btn btn-ghost btn-danger" onclick="pool.reset()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 2C3.79 2 2 3.79 2 6s1.79 4 4 4 4-1.79 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M8 2l2 2-2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Reset
+        </button>
+      </div>
+    </section>
+
+    <section class="card" id="submit-card">
+      <div class="card-header">
+        <span class="card-label"> Submit Tasks</span>
+      </div>
+
+      <div class="priority-grid">
+        <button class="priority-btn p-critical" onclick="pool.submit('CRITICAL',1)">
+          <span class="p-dot"></span>
+          <span class="p-name">CRITICAL</span>
+          <span class="p-key">×1</span>
+        </button>
+        <button class="priority-btn p-high" onclick="pool.submit('HIGH',1)">
+          <span class="p-dot"></span>
+          <span class="p-name">HIGH</span>
+          <span class="p-key">×1</span>
+        </button>
+        <button class="priority-btn p-normal" onclick="pool.submit('NORMAL',1)">
+          <span class="p-dot"></span>
+          <span class="p-name">NORMAL</span>
+          <span class="p-key">×1</span>
+        </button>
+        <button class="priority-btn p-low" onclick="pool.submit('LOW',1)">
+          <span class="p-dot"></span>
+          <span class="p-name">LOW</span>
+          <span class="p-key">×1</span>
+        </button>
+      </div>
+
+      <button class="btn btn-burst" onclick="pool.burst()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1L9 6H13L9.5 9L11 13L7 10L3 13L4.5 9L1 6H5L7 1Z" fill="currentColor"/>
+        </svg>
+        Burst Submit
+      </button>
+
+      <button class="btn btn-scenario" onclick="pool.runScenario()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 7L5 4V6H10V8H5V10L2 7Z" fill="currentColor"/>
+          <path d="M12 3V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Run Scenario
+      </button>
+    </section>
+
+    <section class="card metrics-card">
+      <div class="card-header">
+        <span class="card-label"> Metrics</span>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-num green" id="m-active">0</div>
+          <div class="metric-label">active</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num amber" id="m-queue">0</div>
+          <div class="metric-label">queued</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num cyan" id="m-done">0</div>
+          <div class="metric-label">done</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num red" id="m-reject">0</div>
+          <div class="metric-label">rejected</div>
+        </div>
+      </div>
+      <div class="throughput-bar">
+        <div class="throughput-label">
+          <span>utilization</span>
+          <span id="util-pct">0%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="util-bar"></div>
+        </div>
+      </div>
+    </section>
+
+  </aside>
+
+  <!-- RIGHT COLUMN -->
+  <div class="content">
+
+    <section class="card workers-card">
+      <div class="card-header">
+        <span class="card-label"> Worker Threads</span>
+        <span class="card-count" id="worker-count">0 / 0 active</span>
+      </div>
+      <div class="workers-grid" id="workers-grid"></div>
+    </section>
+
+    <section class="card queue-card">
+      <div class="card-header">
+        <span class="card-label">Task Queue</span>
+        <div class="queue-capacity">
+          <div class="cap-bar-track">
+            <div class="cap-bar-fill" id="cap-bar"></div>
+          </div>
+          <span id="cap-text">0 / 30</span>
+        </div>
+      </div>
+      <div class="queue-flow" id="queue-flow">
+        <span class="empty-queue">No Pending Tasks</span>
+      </div>
+    </section>
+
+    <section class="card log-card">
+      <div class="card-header">
+        <span class="card-label"> Event Log</span>
+        <button class="btn-clear" onclick="clearLog()">clear</button>
+      </div>
+      <div class="log-scroll" id="log-scroll"></div>
+    </section>
+
+  </div>
+
+</main>
+
+<script src="pool.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
