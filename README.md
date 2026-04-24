@@ -21,7 +21,7 @@ Or visit the live demo:
 ## 🛠️ Built With
 - HTML5
 - CSS3
-- Vanilla JavaScript
+- JavaScript
 
 ## 📚 Concepts Covered
 - Thread lifecycle (idle → busy → idle)
